@@ -1,0 +1,29 @@
+.board {
+  width: 90vmin;
+  height: 90vmin;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  margin: 0 auto;
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile.light {
+  background-color: #f0d9b5;
+}
+
+.tile.dark {
+  background-color: #b58863;
+}
+
+.piece-img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  pointer-events: none;
+}
