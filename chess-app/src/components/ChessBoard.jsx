@@ -1,25 +1,40 @@
-import React from "react";
-import Tile from "./Tile";
-import "../styles/board.css";
+import React, { useState } from 'react';
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import Square from './Square';
+import '../styles/board.css';
+import Game from '../engine/Game.js'
 
-const ChessBoard = () => {
-  const board = [];
+const game = new Game();
 
-  for (let row = 7; row >= 0; row--) {
-        for (let col = 0; col < 8; col++) {
-            const isDark = (row + col) % 2 === 1;
-            board.push(
-                <Tile
-                    key={`${row}-${col}`}
-                    row={row}
-                    col={col}
-                    isDark={!isDark}
-                />
-            );
-        }
-  }
+const Chessboard = () => {
+    const [board, setBoard] = useState(game.start());
 
-  return <div className="board">{board}</div>;
+    // Handle piece movement on drag end
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (!over) return; // No valid drop target
+
+        const [fromRow, fromCol] = active.id.split('-').map(Number);
+        const [toRow, toCol] = over.id.split('-').map(Number);
+        console.log(`Moving piece from ${fromRow},${fromCol} to ${toRow},${toCol}`);
+        // Update board state
+        const newBoard = board.map(row => [...row]); // Deep copy
+        newBoard[toRow][toCol] = newBoard[fromRow][fromCol];
+        newBoard[fromRow][fromCol] = '';
+        setBoard(newBoard);
+    };
+
+  return (
+    <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+        <div className="board">
+            {board.map((row, rowIndex) =>
+                row.map((piece, colIndex) => (
+                    <Square key={`${rowIndex}-${colIndex}`} id={`${rowIndex}-${colIndex}`} piece={piece} />
+                ))
+            )}
+        </div>
+    </DndContext>
+  );
 };
 
-export default ChessBoard;
+export default Chessboard;

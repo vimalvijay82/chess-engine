@@ -25,37 +25,37 @@ export default class ChessBoard {
 
     setNewBoard(){
         for (let i = 0; i < 8; i++) {
-            this.board[1][i] = new Pawn('white');
-            this.board[6][i] = new Pawn('black');
+            this.board[6][i] = new Pawn('white');
+            this.board[1][i] = new Pawn('black');
         }
         let i = 0;
         let j = 7;
         while (i < j) {
             if (i === j-1) {
-                this.board[0][i] = new Queen('white');
-                this.board[0][j] = new King('white');
-                this.board[7][i] = new Queen('black');
-                this.board[7][j] = new King('black');
+                this.board[7][i] = new Queen('white');
+                this.board[7][j] = new King('white');
+                this.board[0][i] = new Queen('black');
+                this.board[0][j] = new King('black');
             }
             else {
                 switch (i) {
                     case 0:
-                        this.board[0][i] = new Rook('white');
-                        this.board[0][j] = new Rook('white');
-                        this.board[7][i] = new Rook('black');
-                        this.board[7][j] = new Rook('black');
+                        this.board[7][i] = new Rook('white');
+                        this.board[7][j] = new Rook('white');
+                        this.board[0][i] = new Rook('black');
+                        this.board[0][j] = new Rook('black');
                         break;
                     case 1:
-                        this.board[0][i] = new Knight('white');
-                        this.board[0][j] = new Knight('white');
-                        this.board[7][i] = new Knight('black');
-                        this.board[7][j] = new Knight('black');
+                        this.board[7][i] = new Knight('white');
+                        this.board[7][j] = new Knight('white');
+                        this.board[0][i] = new Knight('black');
+                        this.board[0][j] = new Knight('black');
                         break;
                     case 2:
-                        this.board[0][i] = new Bishop('white');
-                        this.board[0][j] = new Bishop('white');
-                        this.board[7][i] = new Bishop('black');
-                        this.board[7][j] = new Bishop('black');
+                        this.board[7][i] = new Bishop('white');
+                        this.board[7][j] = new Bishop('white');
+                        this.board[0][i] = new Bishop('black');
+                        this.board[0][j] = new Bishop('black');
                         break;
                 }
             }
@@ -65,8 +65,36 @@ export default class ChessBoard {
         return this.board;
     }
 
+    _getPieceType(piece) {
+        if (piece instanceof Pawn && piece.color === 'white') return 'wP';
+        if (piece instanceof Pawn && piece.color === 'black') return 'bP';
+        if (piece instanceof Rook && piece.color === 'white') return 'wR';
+        if (piece instanceof Rook && piece.color === 'black') return 'bR';
+        if (piece instanceof Knight && piece.color === 'white') return 'wN';
+        if (piece instanceof Knight && piece.color === 'black') return 'bN';
+        if (piece instanceof Bishop && piece.color === 'white') return 'wB';
+        if (piece instanceof Bishop && piece.color === 'black') return 'bB';
+        if (piece instanceof Queen && piece.color === 'white') return 'wQ';
+        if (piece instanceof Queen && piece.color === 'black') return 'bQ';
+        if (piece instanceof King && piece.color === 'white') return 'wK';
+        if (piece instanceof King && piece.color === 'black') return 'bK';
+        return null;
+    }
+
     getBoard() {
-        return this.board;
+        let board = [];
+        for (let i = 0; i < 8; i++) {
+            let row = [];
+            for (let j = 0; j < 8; j++) {
+                if (this.board[i][j] === null) {
+                    row.push('');
+                } else {
+                    row.push(this._getPieceType(this.board[i][j]));
+                }
+            }
+            board.push(row);
+        }
+        return board;
     }
 
     getPieceAt(position) {
@@ -120,7 +148,7 @@ export default class ChessBoard {
     }
 
     printBoard() {
-        for (let i = 7; i >= 0; i--) {
+        for (let i = 0; i < 8; i++) {
             let row = '';
             for (let j = 0; j < this.board[i].length; j++) {
                 if (this.board[i][j] === null) {

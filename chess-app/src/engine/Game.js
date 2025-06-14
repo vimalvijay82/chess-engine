@@ -10,6 +10,7 @@ export default class Game {
     start(){
         this.board.setNewBoard();
         this.board.printBoard();
+        return this.board.getBoard();
     }
     setPiece(r,c,type,color){
         this.board.setNewPiece(r,c,type,color)
