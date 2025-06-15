@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import Square from './Square';
 import '../styles/board.css';
 import Game from '../engine/Game.js'
 
 const game = new Game();
+const initialBoard = game.start()
 
 const Chessboard = () => {
-    const [board, setBoard] = useState(game.start());
+    const [board, setBoard] = useState(initialBoard);
 
     // Handle piece movement on drag end
     const handleDragEnd = (event) => {
@@ -18,9 +19,10 @@ const Chessboard = () => {
         const [toRow, toCol] = over.id.split('-').map(Number);
         console.log(`Moving piece from ${fromRow},${fromCol} to ${toRow},${toCol}`);
         // Update board state
-        const newBoard = board.map(row => [...row]); // Deep copy
-        newBoard[toRow][toCol] = newBoard[fromRow][fromCol];
-        newBoard[fromRow][fromCol] = '';
+        const newBoard = game.playMove([fromRow, fromCol], [toRow, toCol]);
+        // const newBoard = board.map(row => [...row]); // Deep copy
+        // newBoard[toRow][toCol] = newBoard[fromRow][fromCol];
+        // newBoard[fromRow][fromCol] = '';
         setBoard(newBoard);
     };
 

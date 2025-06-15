@@ -9,6 +9,40 @@ import King from './pieces/King.js'
 export default class ChessBoard {
     constructor() {
         this.board = this._initializeEmptyBoard();
+        this.whiteKingPos = [];
+        this.blackKingPos = [];
+        this.whitePieces = [];
+        this.blackPieces = [];
+        this.castlingRights = {
+            white: {kingside: true, queenside: true},
+            black: {kingside: true, queenside: true}
+        }
+        this.enPassantTarget = null;
+    }
+
+    deepCopy() {
+        const copy = new ChessBoard();
+        for (let i = 0; i < 8; i++){
+            for (let j = 0; j < 8; j++){
+                if (this.board[i][j] != null) {
+                    copy.board[i][j] = this.board[i][j].deepCopy();
+                }
+            }
+        }
+        copy.whiteKingPos = this.whiteKingPos.slice();
+        copy.blackKingPos = this.blackKingPos.slice();
+        if (this.enPassantTarget != null) {
+            copy.enPassantTarget = this.enPassantTarget.slice();
+        } else {
+            copy.enPassantTarget = this.enPassantTarget
+        }
+    
+        copy.whitePieces = this.whitePieces.map(coord => coord.slice());
+        copy.blackPieces = this.blackPieces.map(coord => coord.slice());
+
+        copy.castlingRights = JSON.parse(JSON.stringify(this.castlingRights));
+        
+        return copy;
     }
 
     _initializeEmptyBoard(){
@@ -27,6 +61,8 @@ export default class ChessBoard {
         for (let i = 0; i < 8; i++) {
             this.board[6][i] = new Pawn('white');
             this.board[1][i] = new Pawn('black');
+            this.whitePieces.push([6,i]);
+            this.blackPieces.push([1,i]);
         }
         let i = 0;
         let j = 7;
@@ -36,6 +72,8 @@ export default class ChessBoard {
                 this.board[7][j] = new King('white');
                 this.board[0][i] = new Queen('black');
                 this.board[0][j] = new King('black');
+                this.whiteKingPos = [7,j];
+                this.blackKingPos = [0,j];
             }
             else {
                 switch (i) {
@@ -59,6 +97,10 @@ export default class ChessBoard {
                         break;
                 }
             }
+            this.whitePieces.push([7,i]);
+            this.whitePieces.push([7,j]);
+            this.blackPieces.push([0,i]);
+            this.blackPieces.push([0,j]);
             i++;
             j--;
         }
@@ -129,6 +171,93 @@ export default class ChessBoard {
         this.board[tR][tC] = piece
     }
 
+    getAllPiecesColor(color){
+        switch(color){
+            case 'white':
+                return this.whitePieces;
+            case 'black':
+                return this.blackPieces;
+        }
+    }
+
+    getAllMovesColor(color){
+        let moves = {};
+        let pieceList = [];
+        if(color === 'white'){
+            pieceList = this.whitePieces;
+        } else {
+            pieceList = this.blackPieces;
+        }
+        pieceList.forEach((piece)=>{
+            const currPiece = this.getPieceAt(piece);
+            moves[piece] = currPiece.getPseudoLegalMoves(this, piece)
+            // moves.push(currPiece.getPseudoLegalMoves())
+        })
+        return moves
+    }
+
+    isCheck(enemyPieceList, kingPos) {
+
+        for(let i=0; i<enemyPieceList.length; i++) {
+            const pos = enemyPieceList[i];
+            const currPiece = this.getPieceAt(pos);
+            const pseudoLegalMoves = currPiece.getPseudoLegalMoves(this, pos, true)
+            const isKingIncluded = pseudoLegalMoves.some(arr => JSON.stringify(arr) === JSON.stringify(kingPos));
+
+            if (isKingIncluded) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    canCastle(color, side) {
+        const betweenPositions = {
+            white: {kingside: [[7,5], [7,6]], queenside: [[7,1], [7,2], [7, 3]]},
+            black: {kingside: [[0,5], [0,6]], queenside: [[0,1], [0,2], [0, 3]]},
+        }
+        const castlingRight = this.castlingRights[color][side];
+        if (!castlingRight) {
+            return false;
+        }
+
+        const enemyPieceList = color === 'white' ? this.blackPieces : this.whitePieces;
+        let kingPos = color === 'white' ? this.whiteKingPos : this.blackKingPos;
+        if (this.isAttacked(enemyPieceList, kingPos)) {
+            return false;
+        }
+
+        const bwPos = betweenPositions[color][side]
+        for (let i=0; i < bwPos.length; i++) {
+            if (this.getPieceAt(bwPos[i]) !== null) {
+                return false;
+            }
+        }
+
+        for (let i=0; i<2; i++) {
+            if (this.isAttacked(enemyPieceList, bwPos[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    isAttacked(enemyPieceList, kingPos) {
+
+        for(let i=0; i<enemyPieceList.length; i++) {
+            const pos = enemyPieceList[i];
+            const currPiece = this.getPieceAt(pos);
+            const pseudoLegalMoves = currPiece.getPseudoLegalMoves(this, pos, true)
+            const isKingIncluded = pseudoLegalMoves.some(arr => JSON.stringify(arr) === JSON.stringify(kingPos));
+
+            if (isKingIncluded) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ----------------------------------ADDITIONAL FNS------------------------------------//
     setNewPiece(row, col, type, color) {
         switch(type){
@@ -144,7 +273,7 @@ export default class ChessBoard {
     }
 
     getMoves(r,c){
-        return this.board[r][c].getPseudoValidMoves(this, [r,c])
+        return this.board[r][c].getPseudoLegalMoves(this, [r,c])
     }
 
     printBoard() {
@@ -154,7 +283,11 @@ export default class ChessBoard {
                 if (this.board[i][j] === null) {
                     row += ' . ';
                 } else {
-                    row += ` ${this.board[i][j].type[0]} `;
+                    if (this.board[i][j].color === 'white'){
+                        row += ` ${this.board[i][j].type[0].toUpperCase()} `;
+                    } else {
+                        row += ` ${this.board[i][j].type[0]} `;
+                    }
                 }
             }
             console.log(row);

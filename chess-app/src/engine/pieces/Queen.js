@@ -4,8 +4,14 @@ export default class Queen extends Piece {
     constructor(color) {
         super('queen', color);
     }
-    getPseudoValidMoves(board, fromPos){
+    getPseudoLegalMoves(board, fromPos){
         let directions = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]]
         return this._getSlidingMoves(directions, board, fromPos)
+    }
+
+    deepCopy() {
+        const copy = new Queen(this.color);
+        copy.hasMoved = this.hasMoved;
+        return copy;
     }
 }

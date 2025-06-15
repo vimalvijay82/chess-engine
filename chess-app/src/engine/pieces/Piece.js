@@ -9,6 +9,10 @@ export default class Piece {
         throw new Error("getPseudoLegalMoves() must be implemented in subclass");
     }
 
+    deepCopy() {
+        throw new Error("deepCopy() must be implemented in subclass");
+    }
+
     _getSlidingMoves(directions, board, fromPos) {
         const moves = [];
         directions.forEach((dir) => {

@@ -5,8 +5,14 @@ export default class Rook extends Piece {
         super('rook', color);
     }
 
-    getPseudoValidMoves(board, fromPos){
+    getPseudoLegalMoves(board, fromPos){
         let directions = [[1,0],[-1,0],[0,1],[0,-1]]
         return this._getSlidingMoves(directions, board, fromPos)
+    }
+
+    deepCopy() {
+        const copy = new Rook(this.color);
+        copy.hasMoved = this.hasMoved;
+        return copy;
     }
 }
