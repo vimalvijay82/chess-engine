@@ -41,13 +41,16 @@ export default class Game {
         this._makeMove(this.board, fromPos, this.currentTurn, toPos);
         this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
         
-        if (this.isCheckmate()) {
-            console.log('CheckMate!!');
+        const status = this.checkStatus();
+        if (status) {
+            console.log(status.status);
+            if (status.status === 'checkmate') {
+                console.log(`Checkmate! ${status.winner} wins!`);
+            } else if (status.status === 'stalemate') {
+                console.log('Stalemate! The game is a draw.');
+            }
         }
-        else if(this.isStalemate()) {
-            console.log('Stalemate!!');
-        }
-        // this.board.printBoard();
+        this.board.printBoard();
         return this.board.getBoard();
     }
 
@@ -101,6 +104,25 @@ export default class Game {
         return legalMoves.length === 0;
     }
 
+    checkStatus() {
+        const legalMoves = this.getAllLegalMoves();
+        const enemyPieceList = this.currentTurn === 'white' ? this.board.blackPieces : this.board.whitePieces;
+        const kingPos = this.currentTurn === 'white' ? this.board.whiteKingPos : this.board.blackKingPos;
+        const check = this.board.isCheck(enemyPieceList, kingPos);
+
+        if( check && legalMoves.length === 0) {
+            // this.gameOver = true;
+            return { status: 'checkmate', winner: this.currentTurn === 'white' ? 'black' : 'white' };
+        }
+        if (legalMoves.length === 0) {
+            // this.gameOver = true;
+            return { status: 'stalemate', winner: null };
+        }
+        if (check) {
+            return { status: 'check', winner: null };
+        }
+    }
+
     _makeMove(board, fromPos, currTurn, toPos) {
         const [fR, fC] = fromPos;
         const [tR, tC] = toPos;
@@ -116,6 +138,10 @@ export default class Game {
 
         this._updatePiecePosition(board, fromPos, toPos, isWhiteTurn);
         this._updateCastlingRights(board, fromPos, toPos, currTurn, isKingMove, isRookMove, isRookCaptured);
+        
+        pieceAtFrom.hasMoved = true;
+        board.board[tR][tC] = pieceAtFrom;
+        board.board[fR][fC] = null;
         
         if (isPawnMove) {
             this._handlePawnMove(board, fR, tR, tC, isWhiteTurn, isEnPassantMove);
@@ -134,9 +160,6 @@ export default class Game {
             board.enPassantTarget = null;
         }
         
-        pieceAtFrom.hasMoved = true;
-        board.board[tR][tC] = pieceAtFrom;
-        board.board[fR][fC] = null;
     }
 
     _updatePiecePosition(board, fromPos, toPos, isWhiteTurn) {
@@ -206,6 +229,9 @@ export default class Game {
             board.board[capturedPawnPos[0]][capturedPawnPos[1]] = null;
         } else if (Math.abs(fR - tR) === 2) {
             board.enPassantTarget = isWhiteTurn ? [tR + 1, tC] : [tR - 1, tC];
+        } else if (tR === 0 || tR === 7) {
+            const promotedPiece =  'Queen'; // You can change this to any piece type
+            board.setNewPiece(tR, tC, promotedPiece, isWhiteTurn ? 'white' : 'black');
         }
     }
 
@@ -227,10 +253,6 @@ export default class Game {
         return array
     }
 
-
-    setPiece(r,c,type,color){
-        this.board.setNewPiece(r,c,type,color)
-    }
     getMoves(r,c){
         return this.board.getMoves(r,c)
     }

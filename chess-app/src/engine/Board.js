@@ -260,11 +260,28 @@ export default class ChessBoard {
 
     // ----------------------------------ADDITIONAL FNS------------------------------------//
     setNewPiece(row, col, type, color) {
+        console.log(`Setting new piece: ${type} at (${row}, ${col}) with color ${color}`);
         switch(type){
             case 'Rook':
                 this.board[row][col] = new Rook(color)
+                break;
             case 'King':
                 this.board[row][col] = new King(color)
+                break;
+            case 'Queen':
+                this.board[row][col] = new Queen(color)
+                break;
+            case 'Bishop':
+                this.board[row][col] = new Bishop(color)
+                break;
+            case 'Knight':
+                this.board[row][col] = new Knight(color)
+                break;
+            case 'Pawn':
+                this.board[row][col] = new Pawn(color)
+                break;
+            default:
+                throw new Error('Invalid piece type');
         }
     }
     
