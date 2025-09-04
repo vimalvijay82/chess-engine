@@ -183,7 +183,7 @@ export default class Game {
             if (fromPos[0] === 7 && fromPos[1] === 7 && currTurn === 'white') {
                 board.castlingRights[currTurn].kingside = false;
             } else if (fromPos[0] === 7 && fromPos[1] === 0 && currTurn === 'white') {
-                board.castlingRights[currTurn].quuenside = false;
+                board.castlingRights[currTurn].queenside = false;
             } else if (fromPos[0] === 0 && fromPos[1] === 7 && currTurn === 'black') {
                 board.castlingRights[currTurn].kingside = false;
             } else if (fromPos[0] === 0 && fromPos[1] === 0 && currTurn === 'black') {
