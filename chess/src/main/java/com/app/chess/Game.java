@@ -10,19 +10,19 @@ import com.app.chess.Pieces.Piece;
 
 public class Game {
     Board board;
-    String currentTurn;
+    Player currentTurn;
     boolean gameOver;
     String winner;
 
     public Game() {
          board = new Board();
-         currentTurn = "white";
+         currentTurn = Player.WHITE;
          gameOver = false;
          winner = null;
     }
 
     public String[][] start() {
-        board.initialize();
+        board.setNewBoard();
         board.printBoard();
         return  board.getBoard();
     }
@@ -65,14 +65,14 @@ public class Game {
 
         // Make the move
         makeMove(board, fromPos, toPos, currentTurn);
-        currentTurn = currentTurn.equals("white") ? "black" : "white";
+        currentTurn = currentTurn == Player.WHITE ? Player.BLACK : Player.WHITE;
 
         HashMap<String, String> status = checkStatus();
         if (status != null) {
             System.out.println(status.get(status));
             if (status.get("status").equals("checkmate")) {
                 gameOver = true;
-                winner = currentTurn.equals("white") ? "black" : "white";
+                winner = currentTurn == Player.WHITE ? "black" : "white";
             } else if (status.get("status").equals("stalemate")) {
                 gameOver = true;
                 winner = "draw";
@@ -82,12 +82,12 @@ public class Game {
         return board.getBoard();
     }
 
-    private void makeMove(Board board, int[] fromPos, int[] toPos, String currentTurn) {
+    private void makeMove(Board board, int[] fromPos, int[] toPos, Player currentTurn) {
         int fR, fC, tR, tC;
         fR = fromPos[0]; fC = fromPos[1];
         tR = toPos[0]; tC = toPos[1];
 
-        boolean isWhiteTurn = currentTurn.equals("white");
+        boolean isWhiteTurn = currentTurn == Player.WHITE;
         Piece pieceAtFrom = board.getPieceAt(fromPos);
         Piece pieceAtTo = board.getPieceAt(toPos);
         boolean isKingMove = pieceAtFrom.type.equals("king");
@@ -139,31 +139,31 @@ public class Game {
         }
     }
 
-    private void updateCastlingRights(Board board, int[] fromPos, int[] toPos, String currTurn, boolean isKingMove, 
+    private void updateCastlingRights(Board board, int[] fromPos, int[] toPos, Player currTurn, boolean isKingMove, 
                                      boolean isRookMove, boolean isRookCaptured) {
         
         if (isKingMove) {
             board.castlingRights.get(currTurn).put("kingside", false);
             board.castlingRights.get(currTurn).put("queenside", false);
         } else if (isRookMove) {
-            if (fromPos[0] == 7 && fromPos[1] == 7 && currTurn.equals("white")) {
+            if (fromPos[0] == 7 && fromPos[1] == 7 && currTurn == Player.WHITE) {
                 board.castlingRights.get(currTurn).put("kingside", false);
-            } else if (fromPos[0] == 7 && fromPos[1] == 0 && currTurn.equals("white")) {
+            } else if (fromPos[0] == 7 && fromPos[1] == 0 && currTurn == Player.WHITE) {
                 board.castlingRights.get(currTurn).put("queenside", false);
-            } else if (fromPos[0] == 0 && fromPos[1] == 7 && currTurn.equals("black")) {
+            } else if (fromPos[0] == 0 && fromPos[1] == 7 && currTurn == Player.BLACK) {
                 board.castlingRights.get(currTurn).put("kingside", false);
-            } else if (fromPos[0] == 0 && fromPos[1] == 0 && currTurn.equals("black")) {
+            } else if (fromPos[0] == 0 && fromPos[1] == 0 && currTurn == Player.BLACK) {
                 board.castlingRights.get(currTurn).put("queenside", false);
             }
         } else if (isRookCaptured) {
-            if (toPos[0] == 7 && toPos[1] == 7 && currTurn.equals("black")) {
-                board.castlingRights.get("white").put("kingside", false);
-            } else if (toPos[0] == 7 && toPos[1] == 0 && currTurn.equals("black")) {
-                board.castlingRights.get("white").put("queenside", false);
-            } else if (toPos[0] == 0 && toPos[1] == 7 && currTurn.equals("white")) {
-                board.castlingRights.get("black").put("kingside", false);
-            } else if (toPos[0] == 0 && toPos[1] == 0 && currTurn.equals("white")) {
-                board.castlingRights.get("black").put("queenside", false);
+            if (toPos[0] == 7 && toPos[1] == 7 && currTurn == Player.BLACK) {
+                board.castlingRights.get(Player.WHITE).put("kingside", false);
+            } else if (toPos[0] == 7 && toPos[1] == 0 && currTurn == Player.BLACK) {
+                board.castlingRights.get(Player.WHITE).put("queenside", false);
+            } else if (toPos[0] == 0 && toPos[1] == 7 && currTurn == Player.WHITE) {
+                board.castlingRights.get(Player.BLACK).put("kingside", false);
+            } else if (toPos[0] == 0 && toPos[1] == 0 && currTurn == Player.WHITE) {
+                board.castlingRights.get(Player.BLACK).put("queenside", false);
             }
         }                                
     }
@@ -179,7 +179,7 @@ public class Game {
         } else if (Math.abs(tR - fR) == 2) {
             board.enPassantTarget = isWhiteTurn ? new int[]{tR + 1, tC} : new int[]{tR - 1, tC};
         } else if (tR == 0 || tR == 7) {
-            board.setNewPiece(tR, tC, "Queen", isWhiteTurn ? "white" : "black");
+            board.setNewPiece(tR, tC, "Queen", isWhiteTurn ? Player.WHITE : Player.BLACK);
         }
     }
 
@@ -191,24 +191,24 @@ public class Game {
         }
     }
 
-    private void updateCastlingRookPosition(Board board, String currTurn, String castleSide) {
-        HashMap<String, HashMap<String, int[]>> rookInitialPositions = new HashMap<>() {{
-            put("white", new HashMap<>() {{
+    private void updateCastlingRookPosition(Board board, Player currTurn, String castleSide) {
+        HashMap<Player, HashMap<String, int[]>> rookInitialPositions = new HashMap<>() {{
+            put(Player.WHITE, new HashMap<>() {{
                 put("kingside", new int[]{7, 7});
                 put("queenside", new int[]{7, 0});
             }});
-            put("black", new HashMap<>() {{
+            put(Player.BLACK, new HashMap<>() {{
                 put("kingside", new int[]{0, 7});
                 put("queenside", new int[]{0, 0});
             }});
         }};
 
-        HashMap<String, HashMap<String, int[]>> rookFinalPositions = new HashMap<>() {{
-            put("white", new HashMap<>() {{
+        HashMap<Player, HashMap<String, int[]>> rookFinalPositions = new HashMap<>() {{
+            put(Player.WHITE, new HashMap<>() {{
                 put("kingside", new int[]{7, 5});
                 put("queenside", new int[]{7, 3});
             }});
-            put("black", new HashMap<>() {{
+            put(Player.BLACK, new HashMap<>() {{
                 put("kingside", new int[]{0, 5});
                 put("queenside", new int[]{0, 3});
             }});
@@ -220,7 +220,7 @@ public class Game {
         rook.hasMoved = true;
         board.board[rookToPos[0]][rookToPos[1]] = rook;
         board.board[rookFromPos[0]][rookFromPos[1]] = null;
-        updatePiecePosition(board, rookFromPos, rookToPos, currTurn.equals("white"));
+        updatePiecePosition(board, rookFromPos, rookToPos, currTurn == Player.WHITE);
     }
 
     private void removeValue(List<int[]> list, int[] value) {
