@@ -13,7 +13,7 @@ public class Board {
     List<int[]> whitePieces;
     List<int[]> blackPieces;
     HashMap<Player, HashMap<String, Boolean>> castlingRights;
-    int[] enPassantTarget;
+    public int[] enPassantTarget;
 
     public Board() {
         board = initializeEmptyBoard();
@@ -110,6 +110,7 @@ public class Board {
         } else if (piece instanceof Pawn) {
             return piece.color == Player.WHITE ? "wP" : "bP";
         }
+        return "";
     }
 
     public String[][] getBoard() {
@@ -158,14 +159,14 @@ public class Board {
         return color == Player.WHITE ? whitePieces : blackPieces;
     }
 
-    public HashMap<Piece, List<int[]>> getAllMovesColor(Player color) {
-        HashMap<Piece, List<int[]>> allMoves = new HashMap<>();
+    public HashMap<int[], List<int[]>> getAllMovesColor(Player color) {
+        HashMap<int[], List<int[]>> allMoves = new HashMap<>();
         List<int[]> piecesPositions = getAllPiecesPositions(color);
         for (int[] pos : piecesPositions) {
             Piece piece = getPieceAt(pos);
             if (piece != null) {
                 List<int[]> pieceMoves = piece.getPsuedoLegalMoves(this, pos);
-                allMoves.put(piece, pieceMoves);
+                allMoves.put(pos, pieceMoves);
             }
         }
         return allMoves;
@@ -175,7 +176,12 @@ public class Board {
         for (int[] pos : enemyPieceList) {
             Piece enemyPiece = getPieceAt(pos);
             if (enemyPiece != null) {
-                List<int[]> enemyMoves = enemyPiece.getPsuedoLegalMoves(this, pos, true);
+                List<int[]> enemyMoves;
+                if (enemyPiece.type == PieceType.KING || enemyPiece.type == PieceType.PAWN) {
+                    enemyMoves = enemyPiece.getPsuedoLegalMoves(this, pos, true);
+                } else {
+                    enemyMoves = enemyPiece.getPsuedoLegalMoves(this, pos);
+                }
                 for (int[] move : enemyMoves) {
                     if (Arrays.equals(move, kingPos)) {
                         return true;

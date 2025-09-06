@@ -5,8 +5,9 @@ import java.util.List;
 import org.apache.logging.log4j.util.Strings;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
-import com.app.chess.Pieces.Piece;
+import com.app.chess.Pieces.*;
 
 public class Game {
     Board board;
@@ -45,22 +46,41 @@ public class Game {
         
         // Check if the piece belongs to the current player
         if (pieceAtFrom.color != currentTurn) {
-            System.out.println("Wrong turn: Piece does not belong to current player.")
+            System.out.println("Wrong turn: Piece does not belong to current player.");
             return board.getBoard();
         }
 
         // Check if the move is legal for the piece
         List<int[]> psuedoLegalMoves = pieceAtFrom.getPsuedoLegalMoves(board, fromPos);
-        boolean isLegalMove = false;
+        boolean isIncluded = false;
         for (int[] move : psuedoLegalMoves) {
             if (Arrays.equals(move, toPos)) {
-                isLegalMove = true;
+                isIncluded = true;
                 break;
             }
         }
-        if (!isLegalMove) {
+        if (!isIncluded) {
             System.out.println("Invalid move: Move not allowed for this piece.");
             return board.getBoard();
+        }
+
+        // Check if the move puts own king in check
+        List <int []> legalMoves = getLegalMoves(psuedoLegalMoves, fromPos);
+        if (legalMoves.isEmpty()) {
+            System.out.println("Invalid move: Move would put own king in check.");
+            return board.getBoard();
+        } else {
+            boolean isLegal = false;
+            for (int[] move : legalMoves) {
+                if (Arrays.equals(move, toPos)) {
+                    isLegal = true;
+                    break;
+                }
+            }
+            if (!isLegal) {
+                System.out.println("Invalid move: Move would put own king in check.");
+                return board.getBoard();
+            }
         }
 
         // Make the move
@@ -69,7 +89,7 @@ public class Game {
 
         HashMap<String, String> status = checkStatus();
         if (status != null) {
-            System.out.println(status.get(status));
+            System.out.println(status.get("status"));
             if (status.get("status").equals("checkmate")) {
                 gameOver = true;
                 winner = currentTurn == Player.WHITE ? "black" : "white";
@@ -82,6 +102,59 @@ public class Game {
         return board.getBoard();
     }
 
+    public List<int[]> getLegalMoves(List<int []> psuedoLegalMoves, int[] fromPos) {
+        List<int[]> legalMoves = new ArrayList<>();
+        for (int[] toPos : psuedoLegalMoves) {
+            Board boardCopy = board.deepCopy();
+            makeMove(boardCopy, fromPos, toPos, currentTurn);
+            int[] kingPos = currentTurn == Player.WHITE ? boardCopy.whiteKingPos : boardCopy.blackKingPos;
+            List<int []>enemyPieceList = currentTurn == Player.WHITE ? boardCopy.blackPieces : boardCopy.whitePieces;
+            if (!boardCopy.isCheck(enemyPieceList, kingPos)) {
+                legalMoves.add(toPos);
+            }
+        }
+        return legalMoves;
+    }
+
+    public List<int []> getAllLegalMoves() {
+        List<int []> allLegalMoves = new ArrayList<>();
+        HashMap<int[], List<int[]>> allPseudoMoves = board.getAllMovesColor(currentTurn);
+        for (int[] pos : allPseudoMoves.keySet()) {
+            if (allLegalMoves.size() > 0) {
+                return allLegalMoves;
+            }
+
+            List<int []> pseudoMoves = allPseudoMoves.get(pos);
+            allLegalMoves.addAll((getLegalMoves(pseudoMoves, pos)));
+        }
+        return allLegalMoves;
+    }
+
+    public HashMap<String, String> checkStatus() {
+        List <int[]> legalMoves = getAllLegalMoves();
+        List <int[]> enemyPieceList = currentTurn == Player.WHITE ? board.blackPieces : board.whitePieces;
+        int[] kingPos = currentTurn == Player.WHITE ? board.whiteKingPos : board.blackKingPos;
+        boolean inCheck = board.isCheck(enemyPieceList, kingPos);
+
+        if (inCheck && legalMoves.isEmpty()) {
+            return new HashMap<>() {{
+                put("status", "checkmate");
+                put("winner", currentTurn == Player.WHITE ? "black" : "white");
+            }};
+        } else if (!inCheck && legalMoves.isEmpty()) {
+            return new HashMap<>() {{
+                put("status", "stalemate");
+                put("winner", "draw");
+            }};
+        } else if (inCheck) {
+            return new HashMap<>() {{
+                put("status", "check");
+                put("winner", Strings.EMPTY);
+            }};
+        }
+        return null;
+    }
+
     private void makeMove(Board board, int[] fromPos, int[] toPos, Player currentTurn) {
         int fR, fC, tR, tC;
         fR = fromPos[0]; fC = fromPos[1];
@@ -90,11 +163,11 @@ public class Game {
         boolean isWhiteTurn = currentTurn == Player.WHITE;
         Piece pieceAtFrom = board.getPieceAt(fromPos);
         Piece pieceAtTo = board.getPieceAt(toPos);
-        boolean isKingMove = pieceAtFrom.type.equals("king");
-        boolean isPawnMove = pieceAtFrom.type.equals("pawn");
-        boolean isRookMove = pieceAtFrom.type.equals("rook");
-        boolean isRookCaptured = pieceAtTo != null && pieceAtTo.type.equals("rook");
-        boolean inEnPassantMove = Arrays.equals(board.enPassantTarget, toPos)
+        boolean isKingMove = pieceAtFrom.type == PieceType.KING;
+        boolean isPawnMove = pieceAtFrom.type == PieceType.PAWN;
+        boolean isRookMove = pieceAtFrom.type == PieceType.ROOK;
+        boolean isRookCaptured = pieceAtTo != null && pieceAtTo.type == PieceType.ROOK;
+        boolean inEnPassantMove = Arrays.equals(board.enPassantTarget, toPos);
         boolean isCastling = isKingMove && Math.abs(tC - fC) == 2;
 
         updatePiecePosition(board, fromPos, toPos, isWhiteTurn);
@@ -227,5 +300,8 @@ public class Game {
         list.removeIf(pos -> Arrays.equals(pos, value));
     }
 
+    public List<int[]> getMoves(int r, int c){
+        return board.getMoves(r, c);
+    }
 
 }
